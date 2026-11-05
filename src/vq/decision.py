@@ -78,7 +78,7 @@ class DecisionEngine:
             )
 
         # рекомендация принята: до конца обслуживания едет к рекомендованной
-        car.recommended_station = selected
+        car.recommended_station = selected 
         return Decision(
             car.unit_uuid, now, "recommended",
             from_station=car.own_station, to_station=selected, gain_seconds=gain,
