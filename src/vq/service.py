@@ -116,7 +116,6 @@ class Processor:
                 break
 
         # очереди: пересчёт всех станций, публикация только изменившихся
-        # (состав, порядок или любое время; «сейчас» в диффе не участвует)
         for station_uuid, queue in self._build_queues().items():
             if self.last_queue_entries.get(station_uuid) == queue.entries:
                 continue

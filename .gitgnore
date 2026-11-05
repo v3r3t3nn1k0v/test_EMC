@@ -1,1 +1,17 @@
-.zcode
+
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+
+# Виртуальные окружения
+.venv/
+venv/
+
+# Иде и ОС
+.idea/
+.vscode/
+.DS_Store
+
+# Секреты и локалка
+.env

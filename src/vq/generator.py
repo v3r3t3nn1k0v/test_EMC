@@ -87,7 +87,7 @@ def _to_latlon(x: float, y: float, origin: Point) -> tuple[float, float]:
     k = LAT_M * math.cos(math.radians(origin.lat))
     return (origin.lat + y / LAT_M, origin.lon + x / k)
 
-
+#станция симуляции 
 @dataclass
 class SimStation:
     uuid: str
@@ -96,7 +96,7 @@ class SimStation:
     occupied_until: float = 0.0
     waiting: list[str] = field(default_factory=list)
 
-
+# машина симуляции 
 @dataclass
 class SimCar:
     unit_uuid: str
