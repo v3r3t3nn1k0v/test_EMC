@@ -261,7 +261,9 @@ class Generator:
         due = [m for m in self.buffer if m[0] <= t + 1e-9]
         if due:
             for _, key, payload in due:
-                producer.send(
+                # send() в aiokafka — корутина: кладёт сообщение в батч
+                # (без round-trip), доставка — через flush()
+                await producer.send(
                     self.settings.telemetry_topic,
                     key=key.encode(),
                     value=json.dumps(payload).encode(),
@@ -274,7 +276,7 @@ class Generator:
     async def run(self) -> None:
         st = self.settings
         producer = AIOKafkaProducer(
-            bootstrap_servers=st.bootstrap, acks="1", linger_ms=5,
+            bootstrap_servers=st.bootstrap, acks=1, linger_ms=5,
         )
         consumer = AIOKafkaConsumer(
             st.decision_topic,

@@ -11,11 +11,13 @@ T0 = int(datetime(2026, 9, 15, 12, 0, tzinfo=timezone.utc).timestamp())
 
 
 def test_iso_z():
+    """epoch-секунды → «2026-09-15T12:00:00Z»: формат времени из ТЗ, до буквы Z."""
     assert iso_z(T0) == "2026-09-15T12:00:00Z"
     assert iso_z(T0 + 170) == "2026-09-15T12:02:50Z"
 
 
 def test_parse_telemetry_valid():
+    """Образцовое сообщение из раздела «Данные» ТЗ разбирается без потерь."""
     raw = b'{"unit_uuid": "T-12", "ts": 1757930400, "lat": 49.1288, "lon": 142.6601, "speed_kmh": 21.4}'
     tel = parse_telemetry(raw)
     assert tel is not None
@@ -26,6 +28,12 @@ def test_parse_telemetry_valid():
 
 
 def test_parse_telemetry_garbage_returns_none():
+    """Битое сообщение не роняет сервис: parse отдаёт None, вызывающий пропустит.
+
+    Четыре вида мусора: не-JSON вовсе, пустой объект, нечисловой ts,
+    отсутствие полей. Одно такое сообщение в потоке не должно остановить
+    обработку остальных.
+    """
     assert parse_telemetry(b"not json") is None
     assert parse_telemetry(b"{}") is None  # нет обязательных полей
     assert parse_telemetry(b'{"unit_uuid": "T", "ts": "abc", "lat": 1, "lon": 1, "speed_kmh": 1}') is None
@@ -33,6 +41,12 @@ def test_parse_telemetry_garbage_returns_none():
 
 
 def test_queue_json_matches_tz_example():
+    """Выход queue.v1 повторяет пример из ТЗ дословно.
+
+    null в eta — только у обслуживаемой машины, времена — ISO 8601 UTC,
+    wait_seconds — целые секунды. Потребитель топика ожидает ровно эту
+    форму, любое лишнее поле — уже несовместимость.
+    """
     q = StationQueue("S1", T0, entries=(
         QueueEntry("T1", None, T0 - 60, T0 + 170, 0),
         QueueEntry("T2", T0 + 120, T0 + 170, T0 + 400, 50),
@@ -62,6 +76,7 @@ def test_queue_json_matches_tz_example():
 
 
 def test_decision_json_recommended():
+    """Формат рекомендации — как в примере ТЗ: from/to/gain_seconds."""
     d = Decision("T4", T0, "recommended",
                  from_station="S1", to_station="S2", gain_seconds=80)
     assert decision_to_json(d) == {
@@ -75,6 +90,11 @@ def test_decision_json_recommended():
 
 
 def test_decision_json_rejected():
+    """Формат отказа минимален, как в примере ТЗ: только причина.
+
+    Внутри у Decision есть from_station и для отказов — полезно для логов,
+    но наружу в decision.v1 он не идёт: контракт есть контракт.
+    """
     d = Decision("T4", T0, "rejected", from_station="S1", reason="no_gain")
     assert decision_to_json(d) == {
         "unit_uuid": "T4",
